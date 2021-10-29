@@ -1,4 +1,5 @@
-main.c:7:5:main	8	static
-main.c:13:6:task_1	8	static
-main.c:34:6:task_2	8	static
-main.c:62:6:dumb_delay	24	static
+main.c:8:5:main	8	static
+main.c:15:6:task_1	8	static
+main.c:36:6:task_2	8	static
+main.c:64:6:task_3	16	static
+main.c:122:6:dumb_delay	24	static
