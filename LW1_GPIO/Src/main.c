@@ -7,6 +7,7 @@ void task_3();
 void cr_task1();
 void cr_task2();
 void cr_task3();
+void cr_task4();
 
 int main(void)
 {
@@ -15,7 +16,8 @@ int main(void)
 	//task_3();
 	//cr_task1();
 	//cr_task2();
-	cr_task3();
+	//cr_task3();
+	cr_task4();
 }
 
 void task_1()
@@ -301,6 +303,62 @@ void cr_task3()
 			counter = 0;
 	}
 
+}
+
+void cr_task4()
+{
+	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOEEN | RCC_AHB2ENR_GPIOBEN;
+
+	GPIOE->MODER &= ~(GPIO_MODER_MODE12
+					| GPIO_MODER_MODE13
+					| GPIO_MODER_MODE14
+					| GPIO_MODER_MODE15);
+	GPIOE->MODER |= 1 << GPIO_MODER_MODE12_Pos
+				  | 1 << GPIO_MODER_MODE13_Pos
+				  | 1 << GPIO_MODER_MODE14_Pos
+				  | 1 << GPIO_MODER_MODE15_Pos;
+
+	GPIOB->MODER &= ~(GPIO_MODER_MODE12);
+
+	uint32_t counter = 0,
+			 is_pressed = 0;
+
+	while(1)
+	{
+		dumb_delay(100000);
+
+		GPIOE->ODR &= 0b0000 << GPIO_ODR_OD12_Pos;
+		GPIOE->ODR |= counter << GPIO_ODR_OD12_Pos;
+
+		uint32_t i = 0;
+
+		if((GPIOB->IDR & GPIO_IDR_ID12) == 0 && is_pressed == 0)
+		{
+			//for нужен, чтобы после короткого нажатия не нужно было ждать время как для длинного нажатия
+			for(; i < 50; i++)
+			{
+				dumb_delay(10000);
+
+				if(GPIOB->IDR & GPIO_IDR_ID12)
+				{
+					counter++;
+					if(counter >= 16)
+						counter = 0;
+					break;
+				}
+			}
+
+			if (i == 50)
+				counter = 0;
+		}
+
+		//проверка, нажата ли кнопка после выполнения действия, чтобы с новой итерацией цикла while не происходили действия,
+		//пока кнопка не будет отпущена
+		if((GPIOB->IDR & GPIO_IDR_ID12) == 0)
+			is_pressed = 1;
+		else
+			is_pressed = 0;
+	}
 }
 
 void dumb_delay(uint32_t duration)
