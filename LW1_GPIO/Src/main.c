@@ -4,12 +4,14 @@ void dumb_delay(uint32_t duration);
 void task_1();
 void task_2();
 void task_3();
+void cr_task1();
 
 int main(void)
 {
 	//task_1();
 	//task_2();
-	task_3();
+	//task_3();
+	cr_task1();
 }
 
 void task_1()
@@ -116,6 +118,86 @@ void task_3()
 
 			press_count = 0;
 		}
+	}
+}
+
+void cr_task1()
+{
+	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOEEN | RCC_AHB2ENR_GPIOBEN;
+
+	GPIOE->MODER &= ~(GPIO_MODER_MODE12
+					| GPIO_MODER_MODE13
+					| GPIO_MODER_MODE14
+					| GPIO_MODER_MODE15);
+	GPIOE->MODER |= 1 << GPIO_MODER_MODE12_Pos
+				  | 1 << GPIO_MODER_MODE13_Pos
+				  | 1 << GPIO_MODER_MODE14_Pos
+				  | 1 << GPIO_MODER_MODE15_Pos;
+
+	GPIOB->MODER &= ~(GPIO_MODER_MODE12);
+
+	uint32_t press_count = 0;
+	uint32_t is_pressed = 0;
+	//счётчик кадров анимации
+	uint32_t frame = 0;
+
+	//кадры анимации "победы"
+	uint32_t victory_frames[] = { 0b0001,
+								  0b0010,
+								  0b0100,
+								  0b1000,
+								  0b0100,
+								  0b0010 };
+
+	//кадры анимации "ошибки"
+	uint32_t error_frames[] = { 0b0000,
+								0b1000,
+								0b1100,
+								0b1110,
+								0b1111,
+								0b0111,
+								0b0011,
+								0b0001};
+
+	//количество кадров анимации "победы"
+	uint32_t victory_num_of_frames = sizeof(victory_frames) / sizeof(victory_frames[0]);
+	//количество кадров анимации "ошибки"
+	uint32_t error_num_of_frames = sizeof(error_frames) / sizeof(error_frames[0]);
+
+	while(1)
+	{
+		dumb_delay(100000);
+
+		//очистка состояния загораемых светодиодов
+		GPIOE->ODR &= 0b0000 << GPIO_ODR_OD12_Pos;
+
+		//изменение анимации после нажатия кнопки
+		if(press_count == 0)
+		{
+			if(frame >= victory_num_of_frames)
+				frame = 0;
+
+			GPIOE->ODR |= victory_frames[frame] << GPIO_ODR_OD12_Pos;
+		}
+		else
+		{
+			if(frame >= error_num_of_frames)
+				frame = 0;
+
+			GPIOE->ODR |= error_frames[frame] << GPIO_ODR_OD12_Pos;
+		}
+
+		frame++;
+
+		if((GPIOB->IDR & GPIO_IDR_ID12) == 0 && is_pressed == 0)
+		{
+			is_pressed = 1;
+			//изменение значения счётчика нажатий с 0 на 1 или с 1 на 0
+			press_count ^= 1;
+			frame = 0;
+		}
+		else if(GPIOB->IDR & GPIO_IDR_ID12)
+			is_pressed = 0;
 	}
 }
 
