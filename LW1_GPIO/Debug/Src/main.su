@@ -1,6 +1,7 @@
 main.c:10:5:main	8	static
-main.c:18:6:task_1	8	static
-main.c:39:6:task_2	8	static
-main.c:67:6:task_3	16	static
-main.c:125:6:cr_task1	96	static
-main.c:194:6:dumb_delay	24	static
+main.c:19:6:task_1	8	static
+main.c:40:6:task_2	8	static
+main.c:68:6:task_3	16	static
+main.c:126:6:cr_task1	96	static
+main.c:206:6:cr_task2	8	static
+main.c:250:6:dumb_delay	24	static

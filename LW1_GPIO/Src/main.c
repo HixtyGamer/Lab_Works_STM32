@@ -5,13 +5,15 @@ void task_1();
 void task_2();
 void task_3();
 void cr_task1();
+void cr_task2();
 
 int main(void)
 {
 	//task_1();
 	//task_2();
 	//task_3();
-	cr_task1();
+	//cr_task1();
+	cr_task2();
 }
 
 void task_1()
@@ -201,7 +203,51 @@ void cr_task1()
 	}
 }
 
+void cr_task2()
+{
+	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOEEN | RCC_AHB2ENR_GPIOBEN;
+
+	GPIOE->MODER &= ~(GPIO_MODER_MODE12
+					| GPIO_MODER_MODE13
+					| GPIO_MODER_MODE14
+					| GPIO_MODER_MODE15);
+	GPIOE->MODER |= 1 << GPIO_MODER_MODE12_Pos
+				  | 1 << GPIO_MODER_MODE13_Pos
+				  | 1 << GPIO_MODER_MODE14_Pos
+				  | 1 << GPIO_MODER_MODE15_Pos;
+
+	GPIOB->MODER &= ~(GPIO_MODER_MODE12
+					| GPIO_MODER_MODE13
+					| GPIO_MODER_MODE14
+					| GPIO_MODER_MODE15);
+
+	while(1)
+	{
+		dumb_delay(10000);
+
+		if((GPIOB->IDR & GPIO_IDR_ID12) == 0)
+			GPIOE->ODR |= 1 << GPIO_ODR_OD12_Pos;
+		else
+			GPIOE->ODR &= ~GPIO_ODR_OD12;
+
+		if((GPIOB->IDR & GPIO_IDR_ID13) == 0)
+			GPIOE->ODR |= 1 << GPIO_ODR_OD13_Pos;
+		else
+			GPIOE->ODR &= ~GPIO_ODR_OD13;
+
+		if((GPIOB->IDR & GPIO_IDR_ID14) == 0)
+			GPIOE->ODR |= 1 << GPIO_ODR_OD14_Pos;
+		else
+			GPIOE->ODR &= ~GPIO_ODR_OD14;
+
+		if((GPIOB->IDR & GPIO_IDR_ID15) == 0)
+			GPIOE->ODR |= 1 << GPIO_ODR_OD15_Pos;
+		else
+			GPIOE->ODR &= ~GPIO_ODR_OD15;
+	}
+}
+
 void dumb_delay(uint32_t duration)
 {
-	for(uint32_t i=0; i<duration; i++);
+	for(uint32_t i = 0; i < duration; i++);
 }
