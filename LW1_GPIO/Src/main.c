@@ -148,22 +148,22 @@ void cr_task1()
 	uint32_t frame = 0;
 
 	//кадры анимации "победы"
-	uint32_t victory_frames[] = { 0b0001,
-								  0b0010,
-								  0b0100,
-								  0b1000,
-								  0b0100,
-								  0b0010 };
+	uint32_t victory_frames[][4] = { { 0, 0, 0, 1 },
+									 { 0, 0, 1, 0 },
+									 { 0, 1, 0, 0 },
+									 { 1, 0, 0, 0 },
+									 { 0, 1, 0, 0 },
+									 { 0, 0, 1, 0 } };
 
 	//кадры анимации "ошибки"
-	uint32_t error_frames[] = { 0b0000,
-								0b1000,
-								0b1100,
-								0b1110,
-								0b1111,
-								0b0111,
-								0b0011,
-								0b0001};
+	uint32_t error_frames[][4] = { { 0, 0, 0, 0 },
+								   { 1, 0, 0, 0 },
+								   { 1, 1, 0, 0 },
+								   { 1, 1, 1, 0 },
+								   { 1, 1, 1, 1 },
+								   { 0, 1, 1, 1 },
+								   { 0, 0, 1, 1 },
+								   { 0, 0, 0, 1 } };
 
 	//количество кадров анимации "победы"
 	uint32_t victory_num_of_frames = sizeof(victory_frames) / sizeof(victory_frames[0]);
@@ -175,7 +175,10 @@ void cr_task1()
 		dumb_delay(100000);
 
 		//очистка состояния загораемых светодиодов
-		GPIOE->ODR &= 0b0000 << GPIO_ODR_OD12_Pos;
+		GPIOE->ODR &= ~(GPIO_ODR_OD12
+					  | GPIO_ODR_OD13
+					  | GPIO_ODR_OD14
+					  | GPIO_ODR_OD15);
 
 		//изменение анимации после нажатия кнопки
 		if(press_count == 0)
@@ -183,14 +186,20 @@ void cr_task1()
 			if(frame >= victory_num_of_frames)
 				frame = 0;
 
-			GPIOE->ODR |= victory_frames[frame] << GPIO_ODR_OD12_Pos;
+			GPIOE->ODR |= victory_frames[frame][0] << GPIO_ODR_OD12_Pos
+						| victory_frames[frame][1] << GPIO_ODR_OD13_Pos
+						| victory_frames[frame][2] << GPIO_ODR_OD14_Pos
+						| victory_frames[frame][3] << GPIO_ODR_OD15_Pos;
 		}
 		else
 		{
 			if(frame >= error_num_of_frames)
 				frame = 0;
 
-			GPIOE->ODR |= error_frames[frame] << GPIO_ODR_OD12_Pos;
+			GPIOE->ODR |= error_frames[frame][0] << GPIO_ODR_OD12_Pos
+						| error_frames[frame][1] << GPIO_ODR_OD13_Pos
+						| error_frames[frame][2] << GPIO_ODR_OD14_Pos
+						| error_frames[frame][3] << GPIO_ODR_OD15_Pos;
 		}
 
 		frame++;
@@ -269,15 +278,33 @@ void cr_task3()
 					| GPIO_MODER_MODE14);
 
 	uint32_t counter = 0,
+			 buffer = 0,
 			 b1_is_pressed = 0,
-			 b2_is_pressed = 0;
+			 b2_is_pressed = 0,
+			 b1, b2, b3, b4;
 
 	while(1)
 	{
 		dumb_delay(10000);
 
-		GPIOE->ODR &= 0b0000 << GPIO_ODR_OD12_Pos;
-		GPIOE->ODR |= counter << GPIO_ODR_OD12_Pos;
+		GPIOE->ODR &= ~(GPIO_ODR_OD12
+					  | GPIO_ODR_OD13
+					  | GPIO_ODR_OD14
+					  | GPIO_ODR_OD15);
+
+		buffer = counter;
+		b1 = buffer % 2;
+		buffer = buffer >> 1;
+		b2 = buffer % 2;
+		buffer = buffer >> 1;
+		b3 = buffer % 2;
+		buffer = buffer >> 1;
+		b4 = buffer % 2;
+
+		GPIOE->ODR |= b1 << GPIO_ODR_OD12_Pos
+					| b2 << GPIO_ODR_OD13_Pos
+					| b3 << GPIO_ODR_OD14_Pos
+					| b4 << GPIO_ODR_OD15_Pos;
 
 		if((GPIOB->IDR & GPIO_IDR_ID12) == 0 && b1_is_pressed == 0)
 		{
@@ -321,14 +348,32 @@ void cr_task4()
 	GPIOB->MODER &= ~(GPIO_MODER_MODE12);
 
 	uint32_t counter = 0,
-			 is_pressed = 0;
+			 buffer = 0,
+			 is_pressed = 0,
+			 b1, b2, b3, b4;
 
 	while(1)
 	{
 		dumb_delay(100000);
 
-		GPIOE->ODR &= 0b0000 << GPIO_ODR_OD12_Pos;
-		GPIOE->ODR |= counter << GPIO_ODR_OD12_Pos;
+		GPIOE->ODR &= ~(GPIO_ODR_OD12
+					  | GPIO_ODR_OD13
+					  | GPIO_ODR_OD14
+					  | GPIO_ODR_OD15);
+
+		buffer = counter;
+		b1 = buffer % 2;
+		buffer = buffer >> 1;
+		b2 = buffer % 2;
+		buffer = buffer >> 1;
+		b3 = buffer % 2;
+		buffer = buffer >> 1;
+		b4 = buffer % 2;
+
+		GPIOE->ODR |= b1 << GPIO_ODR_OD12_Pos
+					| b2 << GPIO_ODR_OD13_Pos
+					| b3 << GPIO_ODR_OD14_Pos
+					| b4 << GPIO_ODR_OD15_Pos;
 
 		uint32_t i = 0;
 
