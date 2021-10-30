@@ -6,6 +6,7 @@ void task_2();
 void task_3();
 void cr_task1();
 void cr_task2();
+void cr_task3();
 
 int main(void)
 {
@@ -13,7 +14,8 @@ int main(void)
 	//task_2();
 	//task_3();
 	//cr_task1();
-	cr_task2();
+	//cr_task2();
+	cr_task3();
 }
 
 void task_1()
@@ -245,6 +247,60 @@ void cr_task2()
 		else
 			GPIOE->ODR &= ~GPIO_ODR_OD15;
 	}
+}
+
+void cr_task3()
+{
+	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOEEN | RCC_AHB2ENR_GPIOBEN;
+
+	GPIOE->MODER &= ~(GPIO_MODER_MODE12
+					| GPIO_MODER_MODE13
+					| GPIO_MODER_MODE14
+					| GPIO_MODER_MODE15);
+	GPIOE->MODER |= 1 << GPIO_MODER_MODE12_Pos
+				  | 1 << GPIO_MODER_MODE13_Pos
+				  | 1 << GPIO_MODER_MODE14_Pos
+				  | 1 << GPIO_MODER_MODE15_Pos;
+
+	GPIOB->MODER &= ~(GPIO_MODER_MODE12
+					| GPIO_MODER_MODE13
+					| GPIO_MODER_MODE14);
+
+	uint32_t counter = 0,
+			 b1_is_pressed = 0,
+			 b2_is_pressed = 0;
+
+	while(1)
+	{
+		dumb_delay(10000);
+
+		GPIOE->ODR &= 0b0000 << GPIO_ODR_OD12_Pos;
+		GPIOE->ODR |= counter << GPIO_ODR_OD12_Pos;
+
+		if((GPIOB->IDR & GPIO_IDR_ID12) == 0 && b1_is_pressed == 0)
+		{
+			b1_is_pressed = 1;
+			counter++;
+			if(counter >= 16)
+				counter = 0;
+		}
+		else if(GPIOB->IDR & GPIO_IDR_ID12)
+			b1_is_pressed = 0;
+
+		if((GPIOB->IDR & GPIO_IDR_ID13) == 0 && b2_is_pressed == 0)
+		{
+			b2_is_pressed = 1;
+			counter--;
+			if(counter >= 16)
+				counter = 15;
+		}
+		else if(GPIOB->IDR & GPIO_IDR_ID13)
+			b2_is_pressed = 0;
+
+		if((GPIOB->IDR & GPIO_IDR_ID14) == 0)
+			counter = 0;
+	}
+
 }
 
 void dumb_delay(uint32_t duration)
