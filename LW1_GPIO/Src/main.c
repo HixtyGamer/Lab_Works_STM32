@@ -84,8 +84,8 @@ void task_3()
 
 	GPIOB->MODER &= ~(GPIO_MODER_MODE13 | GPIO_MODER_MODE15);
 
-	uint32_t press_count = 0;
-	uint32_t is_pressed = 0;
+	uint8_t press_count = 0;
+	uint8_t is_pressed = 0;
 
 	while(1)
 	{
@@ -142,13 +142,13 @@ void cr_task1()
 
 	GPIOB->MODER &= ~(GPIO_MODER_MODE12);
 
-	uint32_t press_count = 0;
-	uint32_t is_pressed = 0;
+	uint8_t press_count = 0;
+	uint8_t is_pressed = 0;
 	//счётчик кадров анимации
-	uint32_t frame = 0;
+	uint8_t frame = 0;
 
 	//кадры анимации "победы"
-	uint32_t victory_frames[][4] = { { 0, 0, 0, 1 },
+	uint8_t victory_frames[][4] = { { 0, 0, 0, 1 },
 									 { 0, 0, 1, 0 },
 									 { 0, 1, 0, 0 },
 									 { 1, 0, 0, 0 },
@@ -156,7 +156,7 @@ void cr_task1()
 									 { 0, 0, 1, 0 } };
 
 	//кадры анимации "ошибки"
-	uint32_t error_frames[][4] = { { 0, 0, 0, 0 },
+	uint8_t error_frames[][4] = { { 0, 0, 0, 0 },
 								   { 1, 0, 0, 0 },
 								   { 1, 1, 0, 0 },
 								   { 1, 1, 1, 0 },
@@ -166,9 +166,9 @@ void cr_task1()
 								   { 0, 0, 0, 1 } };
 
 	//количество кадров анимации "победы"
-	uint32_t victory_num_of_frames = sizeof(victory_frames) / sizeof(victory_frames[0]);
+	uint8_t victory_num_of_frames = sizeof(victory_frames) / sizeof(victory_frames[0]);
 	//количество кадров анимации "ошибки"
-	uint32_t error_num_of_frames = sizeof(error_frames) / sizeof(error_frames[0]);
+	uint8_t error_num_of_frames = sizeof(error_frames) / sizeof(error_frames[0]);
 
 	while(1)
 	{
@@ -277,11 +277,11 @@ void cr_task3()
 					| GPIO_MODER_MODE13
 					| GPIO_MODER_MODE14);
 
-	uint32_t counter = 0,
-			 buffer = 0,
-			 b1_is_pressed = 0,
-			 b2_is_pressed = 0,
-			 b1, b2, b3, b4;
+	uint8_t counter = 0,
+			buffer = 0,
+			b1_is_pressed = 0,
+			b2_is_pressed = 0,
+			b1, b2, b3, b4;
 
 	while(1)
 	{
@@ -347,7 +347,7 @@ void cr_task4()
 
 	GPIOB->MODER &= ~(GPIO_MODER_MODE12);
 
-	uint32_t counter = 0,
+	uint8_t counter = 0,
 			 buffer = 0,
 			 is_pressed = 0,
 			 b1, b2, b3, b4;
@@ -375,7 +375,7 @@ void cr_task4()
 					| b3 << GPIO_ODR_OD14_Pos
 					| b4 << GPIO_ODR_OD15_Pos;
 
-		uint32_t i = 0;
+		uint8_t i = 0;
 
 		if((GPIOB->IDR & GPIO_IDR_ID12) == 0 && is_pressed == 0)
 		{
