@@ -1,10 +1,10 @@
 main.c:13:5:main	8	static
 main.c:25:6:task_1	8	static
 main.c:46:6:task_2	8	static
-main.c:74:6:task_3	16	static
-main.c:132:6:cr_task1	80	static
-main.c:221:6:cr_task2	8	static
-main.c:265:6:cr_task3	16	static
-main.c:337:6:cr_task4	16	static
-main.c:411:6:cr_taskA	80	static
-main.c:505:6:dumb_delay	24	static
+main.c:82:6:task_3	16	static
+main.c:128:6:cr_task1	32	static
+main.c:217:6:cr_task2	8	static
+main.c:277:6:cr_task3	16	static
+main.c:342:6:cr_task4	24	static
+main.c:410:6:cr_taskA	32	static
+main.c:503:6:dumb_delay	24	static
