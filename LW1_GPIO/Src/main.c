@@ -9,6 +9,8 @@ void cr_task2();
 void cr_task3();
 void cr_task4();
 void cr_taskA();
+void cr_taskB();
+void cr_taskB2();
 
 int main(void)
 {
@@ -19,7 +21,10 @@ int main(void)
 	//cr_task2();
 	//cr_task3();
 	//cr_task4();
-	cr_taskA();
+	//cr_taskA();
+	//cr_taskB();
+	cr_taskB2();
+
 }
 
 void task_1()
@@ -497,6 +502,313 @@ void cr_taskA()
 		}
 
 		frame++;
+	}
+}
+
+void cr_taskB()
+{
+	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOEEN | RCC_AHB2ENR_GPIOBEN;
+
+	GPIOE->MODER &= ~(GPIO_MODER_MODE12
+					| GPIO_MODER_MODE13
+					| GPIO_MODER_MODE14
+					| GPIO_MODER_MODE15);
+	GPIOE->MODER |= 1 << GPIO_MODER_MODE12_Pos
+				  | 1 << GPIO_MODER_MODE13_Pos
+				  | 1 << GPIO_MODER_MODE14_Pos
+				  | 1 << GPIO_MODER_MODE15_Pos;
+
+	GPIOB->MODER &= ~(GPIO_MODER_MODE12
+					| GPIO_MODER_MODE13
+					| GPIO_MODER_MODE14
+					| GPIO_MODER_MODE15);
+
+	uint32_t correct_combination = 1234;
+	uint32_t combination_input = 0;
+
+	uint8_t frames_passed = 0,
+			frame = 0,
+			mistakes = 0,
+			b1_pressed = 0,
+			b2_pressed = 0,
+			b3_pressed = 0,
+			b4_pressed = 0;
+
+	//кадры анимации "победы"
+	uint8_t victory_frames[] = { 0b0001,
+								 0b0010,
+								 0b0100,
+								 0b1000,
+								 0b0100,
+								 0b0010 };
+
+	//кадры анимации "ошибки"
+	uint8_t error_frames[] = { 0b0000,
+							   0b1000,
+							   0b1100,
+							   0b1110,
+							   0b1111,
+							   0b0111,
+							   0b0011,
+							   0b0001 };
+
+	//количество кадров анимации "победы"
+	uint8_t victory_num_of_frames = sizeof(victory_frames) / sizeof(victory_frames[0]);
+	//количество кадров анимации "ошибки"
+	uint8_t error_num_of_frames = sizeof(error_frames) / sizeof(error_frames[0]);
+
+	while(1)
+	{
+		dumb_delay(100000);
+
+		if(((GPIOB->IDR & GPIO_IDR_ID12) == 0) && (b1_pressed == 0))
+		{
+			GPIOE->BSRR = GPIO_BSRR_BS12;
+			b1_pressed = 1;
+			combination_input = combination_input * 10 + 1;
+		}
+
+		if(((GPIOB->IDR & GPIO_IDR_ID13) == 0) && (b2_pressed == 0))
+		{
+			GPIOE->BSRR = GPIO_BSRR_BS13;
+			b2_pressed = 1;
+			combination_input = combination_input * 10 + 2;
+		}
+
+		if(((GPIOB->IDR & GPIO_IDR_ID14) == 0) && (b3_pressed == 0))
+		{
+			GPIOE->BSRR = GPIO_BSRR_BS14;
+			b3_pressed = 1;
+			combination_input = combination_input * 10 + 3;
+		}
+
+		if(((GPIOB->IDR & GPIO_IDR_ID15) == 0) && (b4_pressed == 0))
+		{
+			GPIOE->BSRR = GPIO_BSRR_BS15;
+			b4_pressed = 1;
+			combination_input = combination_input * 10 + 4;
+		}
+
+		if(b1_pressed && b2_pressed && b3_pressed && b4_pressed)
+		{
+			GPIOE->BSRR = GPIO_BSRR_BR12
+						| GPIO_BSRR_BR13
+						| GPIO_BSRR_BR14
+						| GPIO_BSRR_BR15;
+
+			if(combination_input == correct_combination)
+			{
+				if(frame >= victory_num_of_frames)
+				{
+					frame = 0;
+				}
+
+				GPIOE->BSRR = victory_frames[frame] << GPIO_BSRR_BS12_Pos;
+				frame++;
+			}
+			else if(mistakes < 2)  //если считать от нуля, то не более 3х ошибок
+			{
+				if(frame >= error_num_of_frames)
+				{
+					frame = 0;
+				}
+
+				GPIOE->BSRR = error_frames[frame] << GPIO_BSRR_BS12_Pos;
+				frame++;
+				frames_passed++;
+
+				if(frames_passed >= error_num_of_frames * 2)
+				{
+					mistakes++;
+					frames_passed = 0;
+					combination_input = 0;
+					b1_pressed = 0;
+					b2_pressed = 0;
+					b3_pressed = 0;
+					b4_pressed = 0;
+
+					GPIOE->BSRR = GPIO_BSRR_BR12
+								| GPIO_BSRR_BR13
+								| GPIO_BSRR_BR14
+								| GPIO_BSRR_BR15;
+				}
+			}
+			else
+			{
+				if(frame >= error_num_of_frames)
+				{
+					frame = 0;
+				}
+
+				GPIOE->BSRR = error_frames[frame] << GPIO_BSRR_BS12_Pos;
+				frame++;
+			}
+		}
+	}
+}
+
+void cr_taskB2()
+{
+	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOEEN | RCC_AHB2ENR_GPIOBEN;
+
+	GPIOE->MODER &= ~(GPIO_MODER_MODE12
+					| GPIO_MODER_MODE13
+					| GPIO_MODER_MODE14
+					| GPIO_MODER_MODE15);
+	GPIOE->MODER |= 1 << GPIO_MODER_MODE12_Pos
+				  | 1 << GPIO_MODER_MODE13_Pos
+				  | 1 << GPIO_MODER_MODE14_Pos
+				  | 1 << GPIO_MODER_MODE15_Pos;
+
+	GPIOB->MODER &= ~(GPIO_MODER_MODE12
+					| GPIO_MODER_MODE13
+					| GPIO_MODER_MODE14
+					| GPIO_MODER_MODE15);
+
+	uint64_t correct_combination = 12341234,
+			 combination_input = 0;
+	uint8_t password_length = 8;
+
+	uint8_t frames_passed = 0,
+			frame = 0,
+			mistakes = 0,
+			b1_pressed = 0,
+			b2_pressed = 0,
+			b3_pressed = 0,
+			b4_pressed = 0,
+			press_count = 0;
+
+	//кадры анимации "победы"
+	uint8_t victory_frames[] = { 0b0001,
+								 0b0010,
+								 0b0100,
+								 0b1000,
+								 0b0100,
+								 0b0010 };
+
+	//кадры анимации "ошибки"
+	uint8_t error_frames[] = { 0b0000,
+							   0b1000,
+							   0b1100,
+							   0b1110,
+							   0b1111,
+							   0b0111,
+							   0b0011,
+							   0b0001 };
+
+	//количество кадров анимации "победы"
+	uint8_t victory_num_of_frames = sizeof(victory_frames) / sizeof(victory_frames[0]);
+	//количество кадров анимации "ошибки"
+	uint8_t error_num_of_frames = sizeof(error_frames) / sizeof(error_frames[0]);
+
+	while(1)
+	{
+		dumb_delay(100000);
+
+		if(((GPIOB->IDR & GPIO_IDR_ID12) == 0) && (b1_pressed == 0) && (press_count < password_length))
+		{
+			GPIOE->BSRR = GPIO_BSRR_BS12;
+			b1_pressed = 1;
+			press_count += 1;
+			combination_input = combination_input * 10 + 1;
+		}
+		else if(GPIOB->IDR & GPIO_IDR_ID12)
+		{
+			GPIOE->BSRR = GPIO_BSRR_BR12;
+			b1_pressed = 0;
+		}
+
+		if(((GPIOB->IDR & GPIO_IDR_ID13) == 0) && (b2_pressed == 0) && (press_count < password_length))
+		{
+			GPIOE->BSRR = GPIO_BSRR_BS13;
+			b2_pressed = 1;
+			press_count += 1;
+			combination_input = combination_input * 10 + 2;
+		}
+		else if(GPIOB->IDR & GPIO_IDR_ID13)
+		{
+			GPIOE->BSRR = GPIO_BSRR_BR13;
+			b2_pressed = 0;
+		}
+
+		if(((GPIOB->IDR & GPIO_IDR_ID14) == 0) && (b3_pressed == 0) && (press_count < password_length))
+		{
+			GPIOE->BSRR = GPIO_BSRR_BS14;
+			b3_pressed = 1;
+			press_count += 1;
+			combination_input = combination_input * 10 + 3;
+		}
+		else if(GPIOB->IDR & GPIO_IDR_ID14)
+		{
+			GPIOE->BSRR = GPIO_BSRR_BR14;
+			b3_pressed = 0;
+		}
+
+		if(((GPIOB->IDR & GPIO_IDR_ID15) == 0) && (b4_pressed == 0) && (press_count < password_length))
+		{
+			GPIOE->BSRR = GPIO_BSRR_BS15;
+			b4_pressed = 1;
+			press_count += 1;
+			combination_input = combination_input * 10 + 4;
+		}
+		else if(GPIOB->IDR & GPIO_IDR_ID15)
+		{
+			GPIOE->BSRR = GPIO_BSRR_BR15;
+			b4_pressed = 0;
+		}
+
+		if(press_count >= password_length)
+		{
+			GPIOE->BSRR = GPIO_BSRR_BR12
+						| GPIO_BSRR_BR13
+						| GPIO_BSRR_BR14
+						| GPIO_BSRR_BR15;
+
+			if(combination_input == correct_combination)
+			{
+				if(frame >= victory_num_of_frames)
+				{
+					frame = 0;
+				}
+
+				GPIOE->BSRR = victory_frames[frame] << GPIO_BSRR_BS12_Pos;
+				frame++;
+			}
+			else if(mistakes < 2)  //если считать от нуля, то не более 3х ошибок
+			{
+				if(frame >= error_num_of_frames)
+				{
+					frame = 0;
+				}
+
+				GPIOE->BSRR = error_frames[frame] << GPIO_BSRR_BS12_Pos;
+				frame++;
+				frames_passed++;
+
+				if(frames_passed >= error_num_of_frames * 2)
+				{
+					mistakes++;
+					frames_passed = 0;
+					combination_input = 0;
+					press_count = 0;
+
+					GPIOE->BSRR = GPIO_BSRR_BR12
+								| GPIO_BSRR_BR13
+								| GPIO_BSRR_BR14
+								| GPIO_BSRR_BR15;
+				}
+			}
+			else
+			{
+				if(frame >= error_num_of_frames)
+				{
+					frame = 0;
+				}
+
+				GPIOE->BSRR = error_frames[frame] << GPIO_BSRR_BS12_Pos;
+				frame++;
+			}
+		}
 	}
 }
 
