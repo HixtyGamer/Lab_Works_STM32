@@ -19,11 +19,11 @@ int main(void)
 	//task_3();
 	//cr_task1();
 	//cr_task2();
-	//cr_task3();
+	cr_task3();
 	//cr_task4();
 	//cr_taskA();
 	//cr_taskB();
-	cr_taskB2();
+	//cr_taskB2();
 
 }
 
@@ -108,10 +108,10 @@ void task_3()
 
 		if((GPIOB->IDR & GPIO_IDR_ID13) == 0 && (press_count < 4) && is_pressed == 0)
 		{
-			GPIOE->ODR |= 1 << (GPIO_ODR_OD12_Pos + press_count);
-
 			is_pressed = 1;
 			press_count += 1;
+
+			GPIOE->ODR |= 1 << (GPIO_ODR_OD12_Pos + press_count - 1);
 		}
 		else if(GPIOB->IDR & GPIO_IDR_ID13)
 		{
@@ -309,6 +309,13 @@ void cr_task3()
 			b1_is_pressed = 1;
 			counter++;
 			counter &= 0b1111;
+
+			GPIOE->ODR &= ~(GPIO_ODR_OD12
+						  | GPIO_ODR_OD13
+						  | GPIO_ODR_OD14
+						  | GPIO_ODR_OD15);
+
+			GPIOE->BSRR = counter << GPIO_BSRR_BS12_Pos;
 		}
 		else if(GPIOB->IDR & GPIO_IDR_ID12)
 		{
@@ -320,6 +327,13 @@ void cr_task3()
 			b2_is_pressed = 1;
 			counter--;
 			counter &= 0b1111;
+
+			GPIOE->ODR &= ~(GPIO_ODR_OD12
+						  | GPIO_ODR_OD13
+						  | GPIO_ODR_OD14
+						  | GPIO_ODR_OD15);
+
+			GPIOE->BSRR = counter << GPIO_BSRR_BS12_Pos;
 		}
 		else if(GPIOB->IDR & GPIO_IDR_ID13)
 		{
@@ -329,10 +343,7 @@ void cr_task3()
 		if((GPIOB->IDR & GPIO_IDR_ID14) == 0)
 		{
 			counter = 0;
-		}
 
-		if(((GPIOE->ODR >> GPIO_ODR_OD12_Pos) & 0b1111) ^ counter)
-		{
 			GPIOE->ODR &= ~(GPIO_ODR_OD12
 						  | GPIO_ODR_OD13
 						  | GPIO_ODR_OD14
@@ -341,7 +352,6 @@ void cr_task3()
 			GPIOE->BSRR = counter << GPIO_BSRR_BS12_Pos;
 		}
 	}
-
 }
 
 void cr_task4()

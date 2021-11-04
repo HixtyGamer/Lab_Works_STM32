@@ -1,0 +1,9 @@
+core_cm4.h:1679:22:__NVIC_EnableIRQ	16	static,ignoring_inline_asm
+main.c:10:5:main	8	static
+main.c:17:6:EXTI15_10_IRQHandler	8	static
+main.c:24:6:task_1	8	static
+main.c:46:6:task_1_interrupt	4	static
+main.c:53:6:task_2	8	static
+main.c:78:6:task_2_interrupt	4	static
+main.c:94:6:task_3	8	static
+main.c:141:6:task_3_interrupt	4	static
