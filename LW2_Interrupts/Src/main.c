@@ -6,19 +6,27 @@ void task_2();
 void task_2_interrupt();
 void task_3();
 void task_3_interrupt();
+void cr_task_1();
+void cr_task_1_interrupt();
+void cr_task_3();
+void cr_task_3_interrupt();
 
 int main(void)
 {
 	//task_1();
 	//task_2();
-	task_3();
+	//task_3();
+	//cr_task_1();
+	cr_task_3();
 }
 
 void EXTI15_10_IRQHandler()
 {
 	//task_1_interrupt();
 	//task_2_interrupt();
-	task_3_interrupt();
+	//task_3_interrupt();
+	//cr_task_1_interrupt();
+	cr_task_3_interrupt();
 }
 
 void task_1()
@@ -192,4 +200,73 @@ void task_3_interrupt()
 
 		EXTI->PR1 = EXTI_PR1_PIF15;
 	}
+}
+
+void cr_task_1()
+{
+	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOEEN | RCC_AHB2ENR_GPIOBEN;
+	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
+
+	SYSCFG->EXTICR[3] |= SYSCFG_EXTICR4_EXTI12_PB;
+
+    EXTI->IMR1 |= EXTI_IMR1_IM12;
+    EXTI->FTSR1 |= EXTI_FTSR1_FT12;
+    NVIC_EnableIRQ( EXTI15_10_IRQn );
+
+	GPIOE->MODER &= ~(GPIO_MODER_MODE12
+					| GPIO_MODER_MODE13
+					| GPIO_MODER_MODE14
+					| GPIO_MODER_MODE15);
+	GPIOE->MODER |= 1 << GPIO_MODER_MODE12_Pos
+				  | 1 << GPIO_MODER_MODE13_Pos
+				  | 1 << GPIO_MODER_MODE14_Pos
+				  | 1 << GPIO_MODER_MODE15_Pos;
+
+	GPIOB->MODER &= ~(GPIO_MODER_MODE12);
+
+	while(1)
+	{
+
+	}
+}
+
+void cr_task_1_interrupt()
+{
+	uint8_t counter = (GPIOE->ODR >> GPIO_ODR_OD12_Pos) & 0b1111;
+	uint32_t i = 0,
+			 long_press_delay = 500000;
+
+	for(; i < long_press_delay; i++)
+	{
+		if(GPIOB->IDR & GPIO_IDR_ID12)
+		{
+			counter++;
+			counter &= 0b1111;
+			break;
+		}
+	}
+
+	if (i == long_press_delay)
+	{
+		counter = 0;
+	}
+
+	GPIOE->BSRR = GPIO_BSRR_BR12
+				| GPIO_BSRR_BR13
+				| GPIO_BSRR_BR14
+				| GPIO_BSRR_BR15;
+
+	GPIOE->BSRR = counter << GPIO_BSRR_BS12_Pos;
+
+    EXTI->PR1 = EXTI_PR1_PIF12;
+}
+
+void cr_task_3()
+{
+
+}
+
+void cr_task_3_interrupt()
+{
+
 }
