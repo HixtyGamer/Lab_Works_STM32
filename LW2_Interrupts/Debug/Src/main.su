@@ -8,7 +8,7 @@ main.c:114:6:task_2_interrupt	4	static
 main.c:130:6:task_3	8	static
 main.c:177:6:task_3_interrupt	4	static
 main.c:233:6:cr_task_1	8	static
-main.c:261:6:cr_task_1_interrupt	24	static
-main.c:292:6:cr_task_3	40	static
-main.c:437:6:cr_task_3_interrupt	4	static
-main.c:485:6:dumb_delay	24	static
+main.c:262:6:cr_task_1_interrupt	16	static
+main.c:297:6:cr_task_3	40	static
+main.c:442:6:cr_task_3_interrupt	4	static
+main.c:490:6:dumb_delay	24	static

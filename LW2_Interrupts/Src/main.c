@@ -1,6 +1,6 @@
 #include "stm32g474xx.h"
 
-#define TASK 6
+#define TASK 4
 
 void task_1();
 void task_1_interrupt();
@@ -18,8 +18,8 @@ uint8_t b1_pressed = 0,
 		b2_pressed = 0,
 		b3_pressed = 0,
 		b4_pressed = 0;
-
-uint32_t combination_input = 0;
+uint32_t combination_input = 0,
+		 time_passed = 0;
 
 int main(void)
 {
@@ -235,12 +235,6 @@ void cr_task_1()
 	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOEEN | RCC_AHB2ENR_GPIOBEN;
 	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
 
-	SYSCFG->EXTICR[3] |= SYSCFG_EXTICR4_EXTI12_PB;
-
-    EXTI->IMR1 |= EXTI_IMR1_IM12;
-    EXTI->FTSR1 |= EXTI_FTSR1_FT12;
-    NVIC_EnableIRQ( EXTI15_10_IRQn );
-
 	GPIOE->MODER &= ~(GPIO_MODER_MODE12
 					| GPIO_MODER_MODE13
 					| GPIO_MODER_MODE14
@@ -252,39 +246,50 @@ void cr_task_1()
 
 	GPIOB->MODER &= ~(GPIO_MODER_MODE12);
 
+	SYSCFG->EXTICR[3] |= SYSCFG_EXTICR4_EXTI12_PB;
+
+    EXTI->IMR1 |= EXTI_IMR1_IM12;
+    EXTI->FTSR1 |= EXTI_FTSR1_FT12;
+    EXTI->RTSR1 |= EXTI_RTSR1_RT12;
+    NVIC_EnableIRQ( EXTI15_10_IRQn );
+
 	while(1)
 	{
-
+		for(time_passed = 0; b1_pressed == 1; time_passed++);
 	}
 }
 
 void cr_task_1_interrupt()
 {
-	uint8_t counter = (GPIOE->ODR >> GPIO_ODR_OD12_Pos) & 0b1111;
-	uint32_t i = 0,
-			 long_press_delay = 500000;
+	uint32_t long_press_delay = 500000;
 
-	for(; i < long_press_delay; i++)
+	if((GPIOB->IDR & GPIO_IDR_ID12) == 0)
 	{
-		if(GPIOB->IDR & GPIO_IDR_ID12)
+		b1_pressed = 1;
+	}
+	else
+	{
+		b1_pressed = 0;
+		uint8_t counter = (GPIOE->ODR >> GPIO_ODR_OD12_Pos) & 0b1111;
+
+		if(time_passed < long_press_delay)
 		{
 			counter++;
 			counter &= 0b1111;
-			break;
 		}
+		else
+		{
+			counter = 0;
+		}
+
+		GPIOE->BSRR = GPIO_BSRR_BR12
+					| GPIO_BSRR_BR13
+					| GPIO_BSRR_BR14
+					| GPIO_BSRR_BR15;
+
+		GPIOE->BSRR = counter << GPIO_BSRR_BS12_Pos;
 	}
 
-	if (i == long_press_delay)
-	{
-		counter = 0;
-	}
-
-	GPIOE->BSRR = GPIO_BSRR_BR12
-				| GPIO_BSRR_BR13
-				| GPIO_BSRR_BR14
-				| GPIO_BSRR_BR15;
-
-	GPIOE->BSRR = counter << GPIO_BSRR_BS12_Pos;
 
     EXTI->PR1 = EXTI_PR1_PIF12;
 }
