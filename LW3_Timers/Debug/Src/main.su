@@ -1,0 +1,10 @@
+core_cm4.h:1679:22:__NVIC_EnableIRQ	16	static,ignoring_inline_asm
+main.c:14:5:main	8	static
+main.c:28:6:TIM2_IRQHandler	4	static
+main.c:37:6:TIM3_IRQHandler	8	static
+main.c:44:6:task_1	8	static
+main.c:88:6:task_1_timer	4	static
+main.c:94:6:task_2	8	static
+main.c:138:6:task_2_timer	4	static
+main.c:144:6:task_3	8	static
+main.c:199:6:task_3_timer	4	static
