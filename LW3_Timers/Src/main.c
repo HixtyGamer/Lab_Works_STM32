@@ -1,6 +1,6 @@
 #include "stm32g474xx.h"
 
-#define TASK 3
+#define TASK 4
 
 void task_1();
 void task_1_timer();
@@ -8,8 +8,11 @@ void task_2();
 void task_2_timer();
 void task_3();
 void task_3_timer();
+void cr_task_1();
+void cr_task_1_timer();
+void sleep(uint16_t time);
 
-int interrupt_counter = 1;
+int interrupt_counter = 1; //для задания 3 и творческого задания 1
 
 int main(void)
 {
@@ -20,8 +23,9 @@ int main(void)
 	task_2();
 #elif TASK == 3
 	task_3();
+#elif TASK == 4
+	cr_task_1();
 #endif
-
 
 }
 
@@ -31,6 +35,8 @@ void TIM2_IRQHandler (void)
 	task_1_timer();
 #elif TASK == 2
 	task_2_timer();
+#elif TASK == 4
+	cr_task_1_timer();
 #endif
 }
 
@@ -215,4 +221,68 @@ void task_3_timer()
 	}
 
     TIM3->SR &= ~ TIM_SR_UIF;
+}
+
+void cr_task_1()
+{
+    FLASH->ACR &= ~FLASH_ACR_LATENCY_Msk;
+    FLASH->ACR |= FLASH_ACR_LATENCY_2WS;
+
+    RCC->CR |= RCC_CR_HSEON;
+
+    while ((RCC->CR & RCC_CR_HSERDY) != RCC_CR_HSERDY) {}
+
+    RCC->PLLCFGR&=~(RCC_PLLCFGR_PLLR_Msk | RCC_PLLCFGR_PLLM_Msk | RCC_PLLCFGR_PLLN_Msk);
+
+    RCC->PLLCFGR |= 2 << RCC_PLLCFGR_PLLR_Pos // Установка делителя R
+                    | RCC_PLLCFGR_PLLREN    // Включение R делителя PLL
+                    | 15 << RCC_PLLCFGR_PLLN_Pos // Установка умножителя N
+                    | 0 << RCC_PLLCFGR_PLLM_Pos // Установка делителя M
+                    | RCC_PLLCFGR_PLLSRC_HSE; // HSE - источник сигнала для PLL
+
+    RCC->CR |= RCC_CR_PLLON;
+
+    while ((RCC->CR & RCC_CR_PLLRDY) != RCC_CR_PLLRDY){}
+
+    RCC->CFGR |= RCC_CFGR_SW_Msk;
+    RCC->CFGR &= ~(RCC_CFGR_SW_Msk ^ RCC_CFGR_SW_PLL);
+
+    while ((RCC->CFGR & RCC_CFGR_SWS_PLL) != RCC_CFGR_SWS_PLL){}
+
+    RCC->AHB2ENR |= RCC_AHB2ENR_GPIOEEN;
+    RCC->APB1ENR1 |= RCC_APB1ENR1_TIM2EN;
+
+    GPIOE->MODER &= ~( GPIO_MODER_MODE8_Msk);
+    GPIOE->MODER |= 1 <<  GPIO_MODER_MODE8_Pos;
+
+    TIM2->DIER |= TIM_DIER_UIE;
+    NVIC_EnableIRQ (TIM2_IRQn);
+
+	while(1)
+	{
+		sleep(1000);
+
+	    GPIOE->ODR ^= GPIO_ODR_OD8;
+	}
+}
+
+void cr_task_1_timer()
+{
+	interrupt_counter = 0;
+
+    TIM2->SR &= ~ TIM_SR_UIF;
+}
+
+void sleep(uint16_t time)
+{
+	interrupt_counter = 1;
+
+    TIM2->PSC = 19999; // Предделитель = 19999
+    TIM2->ARR = time;
+    TIM2->CR1 |= TIM_CR1_CEN;
+
+    while(interrupt_counter);
+
+    TIM2->CR1 &= ~TIM_CR1_CEN;
+
 }
