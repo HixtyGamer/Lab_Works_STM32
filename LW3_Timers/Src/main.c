@@ -1,7 +1,8 @@
 #include "stm32g474xx.h"
 
-#define TASK 4
+#define TASK 5
 
+void setup_clock();
 void task_1();
 void task_1_timer();
 void task_2();
@@ -11,6 +12,9 @@ void task_3_timer();
 void cr_task_1();
 void cr_task_1_timer();
 void sleep(uint16_t time);
+void cr_task_2();
+void cr_task_2_interrupt();
+void cr_task_2_timer();
 
 int interrupt_counter = 1; //для задания 3 и творческого задания 1
 
@@ -25,6 +29,8 @@ int main(void)
 	task_3();
 #elif TASK == 4
 	cr_task_1();
+#elif TASK == 5
+	cr_task_2();
 #endif
 
 }
@@ -37,6 +43,8 @@ void TIM2_IRQHandler (void)
 	task_2_timer();
 #elif TASK == 4
 	cr_task_1_timer();
+#elif TASK == 5
+	cr_task_2_timer();
 #endif
 }
 
@@ -47,7 +55,14 @@ void TIM3_IRQHandler (void)
 #endif
 }
 
-void task_1()
+void EXTI15_10_IRQHandler()
+{
+#if TASK == 5
+	cr_task_2_interrupt();
+#endif
+}
+
+void setup_clock()
 {
     FLASH->ACR &= ~FLASH_ACR_LATENCY_Msk;
     FLASH->ACR |= FLASH_ACR_LATENCY_2WS;
@@ -72,6 +87,11 @@ void task_1()
     RCC->CFGR &= ~(RCC_CFGR_SW_Msk ^ RCC_CFGR_SW_PLL);
 
     while ((RCC->CFGR & RCC_CFGR_SWS_PLL) != RCC_CFGR_SWS_PLL){}
+}
+
+void task_1()
+{
+	setup_clock();
 
     RCC->AHB2ENR |= RCC_AHB2ENR_GPIOEEN;
     RCC->APB1ENR1 |= RCC_APB1ENR1_TIM2EN;
@@ -99,29 +119,7 @@ void task_1_timer()
 
 void task_2()
 {
-    FLASH->ACR &= ~FLASH_ACR_LATENCY_Msk;
-    FLASH->ACR |= FLASH_ACR_LATENCY_2WS;
-
-    RCC->CR |= RCC_CR_HSEON;
-
-    while ((RCC->CR & RCC_CR_HSERDY) != RCC_CR_HSERDY) {}
-
-    RCC->PLLCFGR&=~(RCC_PLLCFGR_PLLR_Msk | RCC_PLLCFGR_PLLM_Msk | RCC_PLLCFGR_PLLN_Msk);
-
-    RCC->PLLCFGR |= 2 << RCC_PLLCFGR_PLLR_Pos // Установка делителя R
-                    | RCC_PLLCFGR_PLLREN    // Включение R делителя PLL
-                    | 15 << RCC_PLLCFGR_PLLN_Pos // Установка умножителя N
-                    | 0 << RCC_PLLCFGR_PLLM_Pos // Установка делителя M
-                    | RCC_PLLCFGR_PLLSRC_HSE; // HSE - источник сигнала для PLL
-
-    RCC->CR |= RCC_CR_PLLON;
-
-    while ((RCC->CR & RCC_CR_PLLRDY) != RCC_CR_PLLRDY){}
-
-    RCC->CFGR |= RCC_CFGR_SW_Msk;
-    RCC->CFGR &= ~(RCC_CFGR_SW_Msk ^ RCC_CFGR_SW_PLL);
-
-    while ((RCC->CFGR & RCC_CFGR_SWS_PLL) != RCC_CFGR_SWS_PLL){}
+	setup_clock();
 
     RCC->AHB2ENR |= RCC_AHB2ENR_GPIODEN;
     RCC->APB1ENR1 |= RCC_APB1ENR1_TIM2EN;
@@ -149,29 +147,7 @@ void task_2_timer()
 
 void task_3()
 {
-    FLASH->ACR &= ~FLASH_ACR_LATENCY_Msk;
-    FLASH->ACR |= FLASH_ACR_LATENCY_2WS;
-
-    RCC->CR |= RCC_CR_HSEON;
-
-    while ((RCC->CR & RCC_CR_HSERDY) != RCC_CR_HSERDY) {}
-
-    RCC->PLLCFGR&=~(RCC_PLLCFGR_PLLR_Msk | RCC_PLLCFGR_PLLM_Msk | RCC_PLLCFGR_PLLN_Msk);
-
-    RCC->PLLCFGR |= 2 << RCC_PLLCFGR_PLLR_Pos // Установка делителя R
-                    | RCC_PLLCFGR_PLLREN    // Включение R делителя PLL
-                    | 15 << RCC_PLLCFGR_PLLN_Pos // Установка умножителя N
-                    | 0 << RCC_PLLCFGR_PLLM_Pos // Установка делителя M
-                    | RCC_PLLCFGR_PLLSRC_HSE; // HSE - источник сигнала для PLL
-
-    RCC->CR |= RCC_CR_PLLON;
-
-    while ((RCC->CR & RCC_CR_PLLRDY) != RCC_CR_PLLRDY){}
-
-    RCC->CFGR |= RCC_CFGR_SW_Msk;
-    RCC->CFGR &= ~(RCC_CFGR_SW_Msk ^ RCC_CFGR_SW_PLL);
-
-    while ((RCC->CFGR & RCC_CFGR_SWS_PLL) != RCC_CFGR_SWS_PLL){}
+	setup_clock();
 
     RCC->AHB2ENR |= RCC_AHB2ENR_GPIODEN;
     RCC->APB1ENR1 |= RCC_APB1ENR1_TIM2EN | RCC_APB1ENR1_TIM3EN;
@@ -225,29 +201,7 @@ void task_3_timer()
 
 void cr_task_1()
 {
-    FLASH->ACR &= ~FLASH_ACR_LATENCY_Msk;
-    FLASH->ACR |= FLASH_ACR_LATENCY_2WS;
-
-    RCC->CR |= RCC_CR_HSEON;
-
-    while ((RCC->CR & RCC_CR_HSERDY) != RCC_CR_HSERDY) {}
-
-    RCC->PLLCFGR&=~(RCC_PLLCFGR_PLLR_Msk | RCC_PLLCFGR_PLLM_Msk | RCC_PLLCFGR_PLLN_Msk);
-
-    RCC->PLLCFGR |= 2 << RCC_PLLCFGR_PLLR_Pos // Установка делителя R
-                    | RCC_PLLCFGR_PLLREN    // Включение R делителя PLL
-                    | 15 << RCC_PLLCFGR_PLLN_Pos // Установка умножителя N
-                    | 0 << RCC_PLLCFGR_PLLM_Pos // Установка делителя M
-                    | RCC_PLLCFGR_PLLSRC_HSE; // HSE - источник сигнала для PLL
-
-    RCC->CR |= RCC_CR_PLLON;
-
-    while ((RCC->CR & RCC_CR_PLLRDY) != RCC_CR_PLLRDY){}
-
-    RCC->CFGR |= RCC_CFGR_SW_Msk;
-    RCC->CFGR &= ~(RCC_CFGR_SW_Msk ^ RCC_CFGR_SW_PLL);
-
-    while ((RCC->CFGR & RCC_CFGR_SWS_PLL) != RCC_CFGR_SWS_PLL){}
+	setup_clock();
 
     RCC->AHB2ENR |= RCC_AHB2ENR_GPIOEEN;
     RCC->APB1ENR1 |= RCC_APB1ENR1_TIM2EN;
@@ -284,5 +238,98 @@ void sleep(uint16_t time)
     while(interrupt_counter);
 
     TIM2->CR1 &= ~TIM_CR1_CEN;
+    TIM2->CNT = 0;
 
+}
+
+void cr_task_2()
+{
+	setup_clock();
+
+	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOEEN | RCC_AHB2ENR_GPIOBEN;
+	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
+    RCC->APB1ENR1 |= RCC_APB1ENR1_TIM2EN;
+
+	GPIOE->MODER &= ~(GPIO_MODER_MODE12
+					| GPIO_MODER_MODE13
+					| GPIO_MODER_MODE14
+					| GPIO_MODER_MODE15);
+	GPIOE->MODER |= 1 << GPIO_MODER_MODE12_Pos
+				  | 1 << GPIO_MODER_MODE13_Pos
+				  | 1 << GPIO_MODER_MODE14_Pos
+				  | 1 << GPIO_MODER_MODE15_Pos;
+
+	GPIOB->MODER &= ~(GPIO_MODER_MODE12);
+
+	SYSCFG->EXTICR[3] |= SYSCFG_EXTICR4_EXTI12_PB;
+
+    EXTI->IMR1 |= EXTI_IMR1_IM12;
+    EXTI->FTSR1 |= EXTI_FTSR1_FT12;
+    EXTI->RTSR1 |= EXTI_RTSR1_RT12;
+    NVIC_EnableIRQ( EXTI15_10_IRQn );
+
+    TIM2->DIER |= TIM_DIER_UIE;
+    NVIC_EnableIRQ (TIM2_IRQn);
+
+	while(1)
+	{
+
+	}
+}
+
+void cr_task_2_interrupt()
+{
+	if((GPIOB->IDR & GPIO_IDR_ID12) == 0)
+	{
+	    TIM2->PSC = 19999;
+	    TIM2->ARR = 1000; //долгое нажатие - 1 секунда
+	    TIM2->CNT = 0;
+	    TIM2->CR1 |= TIM_CR1_CEN;
+	}
+	else
+	{
+		if(interrupt_counter)
+		{
+		    TIM2->CR1 &= ~TIM_CR1_CEN;
+
+			uint8_t counter = (GPIOE->ODR >> GPIO_ODR_OD12_Pos) & 0b1111;
+
+			counter++;
+			counter &= 0b1111;
+
+			GPIOE->BSRR = GPIO_BSRR_BR12
+						| GPIO_BSRR_BR13
+						| GPIO_BSRR_BR14
+						| GPIO_BSRR_BR15;
+
+			GPIOE->BSRR = counter << GPIO_BSRR_BS12_Pos;
+		}
+		else
+		{
+			interrupt_counter = 1;
+		}
+
+	}
+
+    EXTI->PR1 = EXTI_PR1_PIF12;
+}
+
+void cr_task_2_timer()
+{
+    TIM2->CR1 &= ~TIM_CR1_CEN;
+
+	uint8_t counter = (GPIOE->ODR >> GPIO_ODR_OD12_Pos) & 0b1111;
+
+	counter = 0;
+	interrupt_counter = 0;
+
+
+	GPIOE->BSRR = GPIO_BSRR_BR12
+				| GPIO_BSRR_BR13
+				| GPIO_BSRR_BR14
+				| GPIO_BSRR_BR15;
+
+	GPIOE->BSRR = counter << GPIO_BSRR_BS12_Pos;
+
+    TIM2->SR &= ~ TIM_SR_UIF;
 }
