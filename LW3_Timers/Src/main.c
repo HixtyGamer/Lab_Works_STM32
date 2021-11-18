@@ -1,6 +1,6 @@
 #include "stm32g474xx.h"
 
-#define TASK 5
+#define TASK 6
 
 void setup_clock();
 void task_1();
@@ -15,6 +15,8 @@ void sleep(uint16_t time);
 void cr_task_2();
 void cr_task_2_interrupt();
 void cr_task_2_timer();
+void cr_task_3();
+void cr_task_3_timer();
 
 int interrupt_counter = 1; //для задания 3 и творческого задания 1
 
@@ -31,6 +33,8 @@ int main(void)
 	cr_task_1();
 #elif TASK == 5
 	cr_task_2();
+#elif TASK == 6
+	cr_task_3();
 #endif
 
 }
@@ -52,6 +56,8 @@ void TIM3_IRQHandler (void)
 {
 #if TASK == 3
 	task_3_timer();
+#elif TASK == 6
+	cr_task_3_timer();
 #endif
 }
 
@@ -332,4 +338,58 @@ void cr_task_2_timer()
 	GPIOE->BSRR = counter << GPIO_BSRR_BS12_Pos;
 
     TIM2->SR &= ~ TIM_SR_UIF;
+}
+
+void cr_task_3()
+{
+	setup_clock();
+
+    RCC->AHB2ENR |= RCC_AHB2ENR_GPIODEN;
+    RCC->APB1ENR1 |= RCC_APB1ENR1_TIM2EN | RCC_APB1ENR1_TIM3EN;
+
+    GPIOD->MODER &= ~( GPIO_MODER_MODE3_Msk);
+    GPIOD->MODER |= 2 <<  GPIO_MODER_MODE3_Pos;
+
+    GPIOD->AFR[0] |= 2 << GPIO_AFRL_AFSEL3_Pos;
+
+    TIM3->PSC = 19999;
+    TIM3->ARR = 1500;
+    TIM3->DIER |= TIM_DIER_UIE; // Разрешение прерывания по переполнению
+    TIM3->CR1 |= TIM_CR1_CEN; // Включение таймера
+    NVIC_EnableIRQ (TIM3_IRQn);
+
+    TIM2->PSC = 0;
+    TIM2->ARR = 100;
+    // Настроить таймер в режим ШИМ
+    TIM2->CCMR1 |=  TIM_CCMR1_OC1PE | 6 << TIM_CCMR1_OC1M_Pos;
+    TIM2->CCER |= TIM_CCER_CC1E; // включить канал 1
+    TIM2->CR1 |= TIM_CR1_ARPE;  // Разрешить автоматическую перегрузку счетчика
+    TIM2->CR1 |= TIM_CR1_CEN; // Включить таймер
+    TIM2->CCR1 = 20; // Установить коэффициент заполнения на канал 3 - 0.625
+
+	while(1)
+	{
+		for(int8_t i = -100; i < 100; i++)
+		{
+			interrupt_counter = 1;
+
+		    TIM3->PSC = 19999; // Предделитель = 19999
+		    TIM3->ARR = 25;
+		    TIM3->CR1 |= TIM_CR1_CEN;
+
+		    while(interrupt_counter);
+
+		    TIM3->CR1 &= ~TIM_CR1_CEN;
+		    TIM3->CNT = 0;
+
+		    TIM2->CCR1 = abs(i);
+		}
+	}
+}
+
+void cr_task_3_timer()
+{
+	interrupt_counter = 0;
+
+    TIM3->SR &= ~ TIM_SR_UIF;
 }
