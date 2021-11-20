@@ -1,6 +1,6 @@
 #include "stm32g474xx.h"
 
-#define TASK 6
+#define TASK 7
 
 void setup_clock();
 void task_1();
@@ -17,6 +17,8 @@ void cr_task_2_interrupt();
 void cr_task_2_timer();
 void cr_task_3();
 void cr_task_3_timer();
+void cr_task_A();
+void cr_task_A_timer();
 
 int interrupt_counter = 1; //для задания 3 и творческого задания 1
 
@@ -35,6 +37,8 @@ int main(void)
 	cr_task_2();
 #elif TASK == 6
 	cr_task_3();
+#elif TASK == 7
+	cr_task_A();
 #endif
 
 }
@@ -58,6 +62,8 @@ void TIM3_IRQHandler (void)
 	task_3_timer();
 #elif TASK == 6
 	cr_task_3_timer();
+#elif TASK == 7
+	cr_task_A_timer();
 #endif
 }
 
@@ -392,4 +398,48 @@ void cr_task_3_timer()
 	interrupt_counter = 0;
 
     TIM3->SR &= ~ TIM_SR_UIF;
+}
+
+void cr_task_A()
+{
+	/*в мс; период сигнала от 2 до 65535 мс (частота ~ от 0.032 до 1000 Гц)*/
+	uint16_t period = 500,
+			 imp_count = 15;
+
+	period--;
+
+	interrupt_counter = imp_count * 2;
+
+	setup_clock();
+
+    RCC->AHB2ENR |= RCC_AHB2ENR_GPIODEN;
+    RCC->APB1ENR1 |= RCC_APB1ENR1_TIM2EN | RCC_APB1ENR1_TIM3EN;
+
+    GPIOD->MODER &= ~( GPIO_MODER_MODE3_Msk);
+    GPIOD->MODER |= 1 <<  GPIO_MODER_MODE3_Pos;
+
+    TIM3->PSC = 9999;
+    TIM3->ARR = period;
+    TIM3->DIER |= TIM_DIER_UIE; // Разрешение прерывания по переполнению
+    TIM3->CR1 |= TIM_CR1_CEN; // Включение таймера
+    NVIC_EnableIRQ (TIM3_IRQn);
+
+	while(1)
+	{
+
+	}
+}
+
+void cr_task_A_timer()
+{
+	interrupt_counter--;
+
+	if(interrupt_counter == 0)
+	{
+	    TIM3->CR1 &= ~TIM_CR1_CEN;
+	}
+
+	GPIOD->ODR ^= GPIO_ODR_OD3;
+
+	TIM3->SR &= ~ TIM_SR_UIF;
 }
