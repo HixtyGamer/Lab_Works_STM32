@@ -1,6 +1,7 @@
 #include "stm32g474xx.h"
+#include "stdlib.h"
 
-#define TASK 7
+#define TASK 6
 
 void setup_clock();
 void task_1();
@@ -20,7 +21,8 @@ void cr_task_3_timer();
 void cr_task_A();
 void cr_task_A_timer();
 
-int interrupt_counter = 1; //для задания 3 и творческого задания 1
+uint32_t interrupt_counter = 1; //для задания 3 и творческих заданий 1, 2 и A
+int8_t duty_cycle = 0; //для творческого задания 2
 
 int main(void)
 {
@@ -365,37 +367,29 @@ void cr_task_3()
     NVIC_EnableIRQ (TIM3_IRQn);
 
     TIM2->PSC = 0;
-    TIM2->ARR = 100;
+    TIM2->ARR = 127;
     // Настроить таймер в режим ШИМ
     TIM2->CCMR1 |=  TIM_CCMR1_OC1PE | 6 << TIM_CCMR1_OC1M_Pos;
     TIM2->CCER |= TIM_CCER_CC1E; // включить канал 1
     TIM2->CR1 |= TIM_CR1_ARPE;  // Разрешить автоматическую перегрузку счетчика
     TIM2->CR1 |= TIM_CR1_CEN; // Включить таймер
-    TIM2->CCR1 = 20; // Установить коэффициент заполнения на канал 3 - 0.625
+    TIM2->CCR1 = abs(duty_cycle);
+
+    TIM3->PSC = 19999; // Предделитель = 19999
+    TIM3->ARR = 25;
+    TIM3->CR1 |= TIM_CR1_CEN;
 
 	while(1)
 	{
-		for(int8_t i = -100; i < 100; i++)
-		{
-			interrupt_counter = 1;
 
-		    TIM3->PSC = 19999; // Предделитель = 19999
-		    TIM3->ARR = 25;
-		    TIM3->CR1 |= TIM_CR1_CEN;
-
-		    while(interrupt_counter);
-
-		    TIM3->CR1 &= ~TIM_CR1_CEN;
-		    TIM3->CNT = 0;
-
-		    TIM2->CCR1 = abs(i);
-		}
 	}
 }
 
 void cr_task_3_timer()
 {
-	interrupt_counter = 0;
+	duty_cycle++;
+
+	TIM2->CCR1 = abs(duty_cycle);
 
     TIM3->SR &= ~ TIM_SR_UIF;
 }
