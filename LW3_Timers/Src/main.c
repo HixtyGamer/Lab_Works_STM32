@@ -1,7 +1,7 @@
 #include "stm32g474xx.h"
 #include "stdlib.h"
 
-#define TASK 6
+#define TASK 8
 
 void setup_clock();
 void task_1();
@@ -20,9 +20,12 @@ void cr_task_3();
 void cr_task_3_timer();
 void cr_task_A();
 void cr_task_A_timer();
+void cr_task_B();
+void cr_task_B_timer();
 
 uint32_t interrupt_counter = 1; //для задания 3 и творческих заданий 1, 2 и A
 int8_t duty_cycle = 0; //для творческого задания 2
+int16_t period_PWM = 200; //для творческого задания B
 
 int main(void)
 {
@@ -41,6 +44,8 @@ int main(void)
 	cr_task_3();
 #elif TASK == 7
 	cr_task_A();
+#elif TASK == 8
+	cr_task_B();
 #endif
 
 }
@@ -66,6 +71,8 @@ void TIM3_IRQHandler (void)
 	cr_task_3_timer();
 #elif TASK == 7
 	cr_task_A_timer();
+#elif TASK == 8
+	cr_task_B_timer();
 #endif
 }
 
@@ -282,6 +289,8 @@ void cr_task_2()
     EXTI->RTSR1 |= EXTI_RTSR1_RT12;
     NVIC_EnableIRQ( EXTI15_10_IRQn );
 
+    TIM2->PSC = 19999;
+    TIM2->ARR = 1000; //долгое нажатие - 1 секунда
     TIM2->DIER |= TIM_DIER_UIE;
     NVIC_EnableIRQ (TIM2_IRQn);
 
@@ -295,8 +304,6 @@ void cr_task_2_interrupt()
 {
 	if((GPIOB->IDR & GPIO_IDR_ID12) == 0)
 	{
-	    TIM2->PSC = 19999;
-	    TIM2->ARR = 1000; //долгое нажатие - 1 секунда
 	    TIM2->CNT = 0;
 	    TIM2->CR1 |= TIM_CR1_CEN;
 	}
@@ -337,7 +344,6 @@ void cr_task_2_timer()
 	counter = 0;
 	interrupt_counter = 0;
 
-
 	GPIOE->BSRR = GPIO_BSRR_BR12
 				| GPIO_BSRR_BR13
 				| GPIO_BSRR_BR14
@@ -360,12 +366,6 @@ void cr_task_3()
 
     GPIOD->AFR[0] |= 2 << GPIO_AFRL_AFSEL3_Pos;
 
-    TIM3->PSC = 19999;
-    TIM3->ARR = 1500;
-    TIM3->DIER |= TIM_DIER_UIE; // Разрешение прерывания по переполнению
-    TIM3->CR1 |= TIM_CR1_CEN; // Включение таймера
-    NVIC_EnableIRQ (TIM3_IRQn);
-
     TIM2->PSC = 0;
     TIM2->ARR = 127;
     // Настроить таймер в режим ШИМ
@@ -377,7 +377,9 @@ void cr_task_3()
 
     TIM3->PSC = 19999; // Предделитель = 19999
     TIM3->ARR = 25;
+    TIM3->DIER |= TIM_DIER_UIE;
     TIM3->CR1 |= TIM_CR1_CEN;
+    NVIC_EnableIRQ (TIM3_IRQn);
 
 	while(1)
 	{
@@ -436,4 +438,57 @@ void cr_task_A_timer()
 	GPIOD->ODR ^= GPIO_ODR_OD3;
 
 	TIM3->SR &= ~ TIM_SR_UIF;
+}
+
+void cr_task_B()
+{
+	setup_clock();
+
+    RCC->AHB2ENR |= RCC_AHB2ENR_GPIODEN;
+    RCC->APB1ENR1 |= RCC_APB1ENR1_TIM2EN | RCC_APB1ENR1_TIM3EN;
+
+    GPIOD->MODER &= ~( GPIO_MODER_MODE3_Msk);
+    GPIOD->MODER |= 2 <<  GPIO_MODER_MODE3_Pos;
+
+    GPIOD->AFR[0] |= 2 << GPIO_AFRL_AFSEL3_Pos;
+
+    TIM2->PSC = 19999;
+    TIM2->ARR = abs(period_PWM);
+    TIM2->CCMR1 |=  TIM_CCMR1_OC1PE | 6 << TIM_CCMR1_OC1M_Pos;
+    TIM2->CCER |= TIM_CCER_CC1E;
+    TIM2->CR1 |= TIM_CR1_ARPE;
+    TIM2->CR1 |= TIM_CR1_CEN;
+    TIM2->CCR1 = abs(period_PWM) / 2;
+
+    TIM3->PSC = 19999;
+    TIM3->ARR = 10;
+    TIM3->DIER |= TIM_DIER_UIE;
+    TIM3->CR1 |= TIM_CR1_CEN;
+    NVIC_EnableIRQ (TIM3_IRQn);
+
+	while(1)
+	{
+
+	}
+}
+
+void cr_task_B_timer()
+{
+	period_PWM++;
+
+	//частота меняется от 5 Гц до 1 Гц (период от 1000 мс до 200 мс)
+	if(period_PWM == 1000)
+	{
+		period_PWM = -999;
+	}
+
+	if(period_PWM == -200)
+	{
+		period_PWM = 201;
+	}
+
+    TIM2->ARR = abs(period_PWM);
+    TIM2->CCR1 = abs(period_PWM) / 2;
+
+    TIM3->SR &= ~ TIM_SR_UIF;
 }
