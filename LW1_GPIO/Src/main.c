@@ -14,12 +14,12 @@ void cr_taskB2();
 
 int main(void)
 {
-	//task_1();
+	task_1();
 	//task_2();
 	//task_3();
 	//cr_task1();
 	//cr_task2();
-	cr_task3();
+	//cr_task3();
 	//cr_task4();
 	//cr_taskA();
 	//cr_taskB();
