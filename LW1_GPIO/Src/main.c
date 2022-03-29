@@ -14,8 +14,8 @@ void cr_taskB2();
 
 int main(void)
 {
-	task_1();
-	//task_2();
+	//task_1();
+	task_2();
 	//task_3();
 	//cr_task1();
 	//cr_task2();
