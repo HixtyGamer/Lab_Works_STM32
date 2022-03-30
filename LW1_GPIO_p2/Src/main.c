@@ -208,6 +208,8 @@ void task3_b2()
 							  | 0b00,
 			curr_combination = 0;
 
+    curr_combination |= (~(right_combination >> 14) & 0b11);
+
 	while(1)
 	{
 		dummy_delay(100000);
