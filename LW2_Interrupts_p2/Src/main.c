@@ -5,9 +5,6 @@
 void task1_3();
 void task1_3_interrupt();
 
-uint8_t buttons_curr = 0,
-		buttons_prev = 0;
-
 int main(void)
 {
 #if TASK == 1
@@ -66,15 +63,7 @@ void task1_3()
 
 	while(1)
 	{
-		if(buttons_prev != buttons_curr)
-		{
-			buttons_prev = buttons_curr;
-			GPIOD->BSRR = GPIO_BSRR_BR10
-						| GPIO_BSRR_BR11
-						| GPIO_BSRR_BR12
-						| GPIO_BSRR_BR13;
-			GPIOD->BSRR = buttons_curr << GPIO_BSRR_BS10_Pos;
-		}
+
 	}
 }
 
@@ -84,11 +73,11 @@ void task1_3_interrupt()
     {
     	if(!(GPIOB->IDR & GPIO_IDR_ID12))
     	{
-    		buttons_curr |= 1 << 3;
+			GPIOD->BSRR = 1 << GPIO_BSRR_BS10_Pos;
     	}
     	else
     	{
-    		buttons_curr &= 0b0111;
+			GPIOD->BSRR = 1 << GPIO_BSRR_BR10_Pos;
     	}
 
         EXTI->PR1 = EXTI_PR1_PIF12;
@@ -97,11 +86,11 @@ void task1_3_interrupt()
     {
     	if(!(GPIOB->IDR & GPIO_IDR_ID13))
     	{
-    		buttons_curr |= 1 << 2;
+    		GPIOD->BSRR = 1 << GPIO_BSRR_BS11_Pos;
     	}
     	else
     	{
-    		buttons_curr &= 0b1011;
+    		GPIOD->BSRR = 1 << GPIO_BSRR_BR11_Pos;
     	}
 
         EXTI->PR1 = EXTI_PR1_PIF13;
@@ -110,11 +99,11 @@ void task1_3_interrupt()
     {
     	if(!(GPIOB->IDR & GPIO_IDR_ID14))
     	{
-    		buttons_curr |= 1 << 1;
+    		GPIOD->BSRR = 1 << GPIO_BSRR_BS12_Pos;
     	}
     	else
     	{
-    		buttons_curr &= 0b1101;
+    		GPIOD->BSRR = 1 << GPIO_BSRR_BR12_Pos;
     	}
 
         EXTI->PR1 = EXTI_PR1_PIF14;
@@ -123,11 +112,11 @@ void task1_3_interrupt()
     {
     	if(!(GPIOB->IDR & GPIO_IDR_ID15))
     	{
-    		buttons_curr |= 1;
+    		GPIOD->BSRR = 1 << GPIO_BSRR_BS13_Pos;
     	}
     	else
     	{
-    		buttons_curr &= 0b1110;
+    		GPIOD->BSRR = 1 << GPIO_BSRR_BR13_Pos;
     	}
 
         EXTI->PR1 = EXTI_PR1_PIF15;
