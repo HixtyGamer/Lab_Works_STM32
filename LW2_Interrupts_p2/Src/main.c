@@ -69,56 +69,7 @@ void task1_3()
 
 void task1_3_interrupt()
 {
-    if(EXTI->PR1 & EXTI_PR1_PIF12)
-    {
-    	if(!(GPIOB->IDR & GPIO_IDR_ID12))
-    	{
-			GPIOD->BSRR = 1 << GPIO_BSRR_BS10_Pos;
-    	}
-    	else
-    	{
-			GPIOD->BSRR = 1 << GPIO_BSRR_BR10_Pos;
-    	}
-
-        EXTI->PR1 = EXTI_PR1_PIF12;
-    }
-    else if (EXTI->PR1 & EXTI_PR1_PIF13)
-    {
-    	if(!(GPIOB->IDR & GPIO_IDR_ID13))
-    	{
-    		GPIOD->BSRR = 1 << GPIO_BSRR_BS11_Pos;
-    	}
-    	else
-    	{
-    		GPIOD->BSRR = 1 << GPIO_BSRR_BR11_Pos;
-    	}
-
-        EXTI->PR1 = EXTI_PR1_PIF13;
-    }
-    else if (EXTI->PR1 & EXTI_PR1_PIF14)
-    {
-    	if(!(GPIOB->IDR & GPIO_IDR_ID14))
-    	{
-    		GPIOD->BSRR = 1 << GPIO_BSRR_BS12_Pos;
-    	}
-    	else
-    	{
-    		GPIOD->BSRR = 1 << GPIO_BSRR_BR12_Pos;
-    	}
-
-        EXTI->PR1 = EXTI_PR1_PIF14;
-    }
-    else if (EXTI->PR1 & EXTI_PR1_PIF15)
-    {
-    	if(!(GPIOB->IDR & GPIO_IDR_ID15))
-    	{
-    		GPIOD->BSRR = 1 << GPIO_BSRR_BS13_Pos;
-    	}
-    	else
-    	{
-    		GPIOD->BSRR = 1 << GPIO_BSRR_BR13_Pos;
-    	}
-
-        EXTI->PR1 = EXTI_PR1_PIF15;
-    }
+	GPIOD->BSRR = 0b1111 << GPIO_BSRR_BR10_Pos;
+	GPIOD->BSRR = ~(((GPIOB->IDR >> GPIO_IDR_ID12_Pos) & 0b1111) << GPIO_BSRR_BS10_Pos);
+	EXTI->PR1 = 0b1111 << EXTI_PR1_PIF12_Pos;
 }
