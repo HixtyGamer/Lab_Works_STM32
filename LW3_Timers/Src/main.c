@@ -262,7 +262,6 @@ void sleep(uint16_t time)
 
     TIM2->CR1 &= ~TIM_CR1_CEN;
     TIM2->CNT = 0;
-
 }
 
 void cr_task_2()
