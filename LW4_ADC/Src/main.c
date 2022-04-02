@@ -280,7 +280,7 @@ void task2_1()
         	GPIOE->BSRR = 0xFF << GPIO_BSRR_BR0_Pos;
         	GPIOE->BSRR = ((1 << leds_to_light_up) - 1) << GPIO_BSRR_BS0_Pos;
     	}
-    	sleep(100);
+    	sleep(50);     //обновление ~20 раз/с
     }
 }
 

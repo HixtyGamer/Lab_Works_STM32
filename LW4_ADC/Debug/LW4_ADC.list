@@ -309,7 +309,7 @@ void task2_1()
     {
     	adc_manually_get_data();
  8000380:	f000 f86c 	bl	800045c <adc_manually_get_data>
-    	leds_to_light_up = current_adc_value[0] / 455;
+    	leds_to_light_up = current_adc_value[0] / 455; //455 ~ 4096 / 9
  8000384:	4b16      	ldr	r3, [pc, #88]	; (80003e0 <task2_1+0x154>)
  8000386:	881a      	ldrh	r2, [r3, #0]
  8000388:	4b16      	ldr	r3, [pc, #88]	; (80003e4 <task2_1+0x158>)
@@ -349,8 +349,8 @@ void task2_1()
  80003c6:	4b04      	ldr	r3, [pc, #16]	; (80003d8 <task2_1+0x14c>)
  80003c8:	619a      	str	r2, [r3, #24]
     	}
-    	sleep(100);
- 80003ca:	2064      	movs	r0, #100	; 0x64
+    	sleep(50);     //обновление ~25 раз/с, для бОльшей плавности
+ 80003ca:	2032      	movs	r0, #50	; 0x32
  80003cc:	f000 f8b8 	bl	8000540 <sleep>
     	adc_manually_get_data();
  80003d0:	e7d6      	b.n	8000380 <task2_1+0xf4>
