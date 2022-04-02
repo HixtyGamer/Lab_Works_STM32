@@ -1,7 +1,7 @@
 #include "stm32g474xx.h"
-#include "math.h"
+//#include "math.h"
 
-#define TASK 4
+#define TASK 5
 
 void setup_clock();
 void setup_adc_dma( uint16_t *array_to_write_to, uint8_t ch_count );
@@ -18,9 +18,10 @@ void task2_3();
 
 
 uint16_t adc_data[4] = { 0 };
-uint16_t current_adc_value[1] = { 0 },
-		 current_adc_values[2] = { 0 };
-uint8_t interrupt_counter,		//нужна для работы точной задержки
+uint16_t current_adc_value[1] = { 0 },  	//массивом, чтобы использовать чутка модифицированную функцию из примера для настройки DMA
+		 current_adc_values[2] = { 0 },
+		delay_duration;
+uint8_t interrupt_counter,					//нужна для работы точной задержки
 		leds_to_light_up,
 		leds_on = 0;
 
@@ -36,6 +37,10 @@ int main(void)
 	task1_3();
 #elif TASK == 4
 	task2_1();
+#elif TASK == 5
+	task2_2();
+#elif TASK == 6
+	task2_3();
 #endif
 }
 
@@ -281,6 +286,69 @@ void task2_1()
         	GPIOE->BSRR = ((1 << leds_to_light_up) - 1) << GPIO_BSRR_BS0_Pos;
     	}
     	sleep(50);     //обновление ~20 раз/с
+    }
+}
+
+void task2_2()
+{
+	setup_clock();
+
+    RCC->AHB2ENR |= RCC_AHB2ENR_GPIOCEN | RCC_AHB2ENR_GPIOEEN;
+
+    RCC->APB1ENR1 |= RCC_APB1ENR1_TIM2EN;
+
+    GPIOE->MODER &= ~(0xFFFF << GPIO_MODER_MODE0_Pos); //0b1111111111111111
+    GPIOE->MODER |= 0x5555 << GPIO_MODER_MODE0_Pos;	   //0b0101010101010101
+
+    TIM2->DIER |= TIM_DIER_UIE;
+  //TIM2->PSC = 19999;
+    NVIC_EnableIRQ (TIM2_IRQn);
+
+    RCC->CCIPR |= (2U) << RCC_CCIPR_ADC12SEL_Pos;
+
+    RCC->AHB2ENR |= RCC_AHB2ENR_ADC12EN;
+
+    ADC2->CR &= ~(ADC_CR_DEEPPWD);
+
+    ADC2->CR |= ADC_CR_ADVREGEN;
+    sleep(1);
+
+    ADC2->CR |= ADC_CR_ADCAL;
+    while ( ADC2->CR & ADC_CR_ADCAL ){}
+
+    ADC2->ISR |= ADC_ISR_ADRDY;
+    ADC2->CR |= ADC_CR_ADEN;
+    while ( !(ADC2->ISR & ADC_ISR_ADRDY) ){}
+
+	ADC2->SMPR1 |= 2 << ADC_SMPR1_SMP6_Pos;
+
+    ADC2->SQR1 |= 6 << ADC_SQR1_SQ1_Pos
+    			| 0 << ADC_SQR1_L_Pos;
+
+	ADC2->CFGR |= ADC_CFGR_DMAEN | ADC_CFGR_DMACFG;
+	setup_adc_dma(current_adc_value, 1);
+
+    while(1)
+    {
+		GPIOE->BSRR = 0xFF << GPIO_BSRR_BR0_Pos;
+		GPIOE->BSRR = (1 << leds_to_light_up) << GPIO_BSRR_BS0_Pos;
+
+    	adc_manually_get_data();
+
+    	//значения задержки должны меняться от 100мс до 2000мс ( от 10 Гц до 0,5 Гц )
+    	delay_duration = ((((1900 * 10000) / 4096 ) * current_adc_value[0]) / 10000) + 100;
+    	//умножение и деление на 10000 нужно чтобы не испльзовать вещественные числа
+
+    	sleep(delay_duration);
+
+    	if(leds_to_light_up == 7)
+    	{
+    		leds_to_light_up = 0;
+    	}
+    	else
+    	{
+    		leds_to_light_up++;
+    	}
     }
 }
 
