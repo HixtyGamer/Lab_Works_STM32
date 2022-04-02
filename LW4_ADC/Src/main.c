@@ -18,10 +18,11 @@ void task2_3();
 
 
 uint16_t adc_data[4] = { 0 };
-uint16_t current_adc_value[1] = { 0 },  	//массивом, чтобы использовать чутка модифицированную функцию из примера для настройки DMA
+uint16_t current_adc_value[1] = { 0 },  		//массивом, чтобы использовать чутка модифицированную функцию из примера для настройки DMA
 		 current_adc_values[2] = { 0 },
-		delay_duration;
-uint8_t interrupt_counter,					//нужна для работы точной задержки
+		 prev_adc_values[2] = { 0 },			//для творческого задания 3
+		delay_duration;	//для творческого задания 2
+uint8_t interrupt_counter,						//нужна для работы точной задержки
 		leds_to_light_up,
 		leds_on = 0;
 
@@ -335,9 +336,9 @@ void task2_2()
 
     	adc_manually_get_data();
 
-    	//значения частоты должны меняться от 0,5 Гц до 10 Гц, а задержка равна 1/частоту
-    	//если считать задержку через частоту, то можно добиться линейного изменения частоты
-    	delay_duration = 8192000 / (19 * current_adc_value[0] + 4096);  //если нужно будет, то объясню как я пришёл к этой формуле
+		//значения частоты должны меняться от 0,5 Гц до 10 Гц, а задержка равна 1/частота
+		//если считать задержку через частоту, то можно добиться линейного изменения частоты
+		delay_duration = 8192000 / (19 * current_adc_value[0] + 4096);  //если нужно будет, то объясню как я пришёл к этой формуле
 
     	sleep(delay_duration);
 
@@ -349,6 +350,78 @@ void task2_2()
     	{
     		leds_to_light_up++;
     	}
+    }
+}
+
+void task2_3()
+{
+	setup_clock();
+
+    RCC->AHB2ENR |= RCC_AHB2ENR_GPIOCEN | RCC_AHB2ENR_GPIOEEN;
+
+    RCC->APB1ENR1 |= RCC_APB1ENR1_TIM2EN | RCC_APB1ENR1_TIM3EN;
+
+    GPIOE->MODER &= ~(GPIO_MODER_MODE2_Msk
+    				| GPIO_MODER_MODE3_Msk);
+    GPIOE->MODER |= 2 << GPIO_MODER_MODE2_Pos
+    			  | 2 << GPIO_MODER_MODE3_Pos;
+
+    GPIOE->AFR[0] |= 2 << GPIO_AFRL_AFSEL2_Pos | 2 << GPIO_AFRL_AFSEL3_Pos;
+
+    TIM3->PSC = 0;
+    TIM3->ARR = 4095;
+    TIM3->CCMR1 |=  TIM_CCMR1_OC1PE | 6 << TIM_CCMR1_OC1M_Pos
+    			   | TIM_CCMR1_OC2PE | 6 << TIM_CCMR1_OC2M_Pos;
+    TIM3->CCER |= TIM_CCER_CC1E | TIM_CCER_CC2E;
+    TIM3->CR1 |= TIM_CR1_ARPE;
+    TIM3->CR1 |= TIM_CR1_CEN;
+
+    TIM2->DIER |= TIM_DIER_UIE;
+    NVIC_EnableIRQ (TIM2_IRQn);
+
+    RCC->CCIPR |= (2U) << RCC_CCIPR_ADC12SEL_Pos;
+
+    RCC->AHB2ENR |= RCC_AHB2ENR_ADC12EN;
+
+    ADC2->CR &= ~(ADC_CR_DEEPPWD);
+
+    ADC2->CR |= ADC_CR_ADVREGEN;
+    sleep(1);
+
+    ADC2->CR |= ADC_CR_ADCAL;
+    while ( ADC2->CR & ADC_CR_ADCAL ){}
+
+    ADC2->ISR |= ADC_ISR_ADRDY;
+    ADC2->CR |= ADC_CR_ADEN;
+    while ( !(ADC2->ISR & ADC_ISR_ADRDY) ){}
+
+	ADC2->SMPR1 |= 2 << ADC_SMPR1_SMP6_Pos
+				 | 2 << ADC_SMPR1_SMP7_Pos;
+
+    ADC2->SQR1 |= 6 << ADC_SQR1_SQ1_Pos
+    			| 7 << ADC_SQR1_SQ2_Pos
+    			| 1 << ADC_SQR1_L_Pos;
+
+	ADC2->CFGR |= ADC_CFGR_DMAEN | ADC_CFGR_DMACFG;
+	setup_adc_dma(current_adc_values, 2);
+
+    while(1)
+    {
+    	adc_manually_get_data();
+
+    	if(prev_adc_values[0] != current_adc_values[0])
+    	{
+        	TIM3->CCR1 = current_adc_values[0];
+        	prev_adc_values[0] = current_adc_values[0];
+    	}
+
+    	if(prev_adc_values[1] != current_adc_values[1])
+    	{
+        	TIM3->CCR2 = current_adc_values[1];
+        	prev_adc_values[1] = current_adc_values[1];
+    	}
+
+    	sleep(50);
     }
 }
 
